@@ -25,24 +25,6 @@ namespace Lab1.Controllers
             return View(await _context.Parameters.ToListAsync());
         }
 
-        // GET: Parameters/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var parameter = await _context.Parameters
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (parameter == null)
-            {
-                return NotFound();
-            }
-
-            return View(parameter);
-        }
-
         // GET: Parameters/Create
         public IActionResult Create()
         {

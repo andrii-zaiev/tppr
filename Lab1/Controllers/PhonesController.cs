@@ -35,6 +35,9 @@ namespace Lab1.Controllers
             }
 
             var phone = await _context.Phones
+                .Include(p => p.PhoneParameterValues)
+                .ThenInclude(v => v.ParameterValue)
+                .ThenInclude(v => v.Parameter)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (phone == null)
             {
@@ -53,7 +56,7 @@ namespace Lab1.Controllers
                 .GroupBy(pv => pv.ParameterId)
                 .ToDictionary(g => g.Key,
                     g => new SelectList(g, nameof(ParameterValue.Id), nameof(ParameterValue.ValueText)));
-            return View();
+            return View(new CreatePhoneModel());
         }
 
         // POST: Phones/Create
@@ -61,24 +64,31 @@ namespace Lab1.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PhoneModel phone)
+        public async Task<IActionResult> Create(CreatePhoneModel model)
         {
             if (ModelState.IsValid)
             {
-                phone.Phone.Id = Guid.NewGuid();
-                _context.Add(phone.Phone);
-
-                foreach (PhoneParameterValue value in phone.PhoneParameterValues)
+                var phone = new Phone
                 {
-                    value.Id = Guid.NewGuid();
-                    value.PhoneId = phone.Phone.Id;
-                    _context.Add(value);
-                }
+                    Id = Guid.NewGuid(),
+                    Name = model.Name
+                };
+                _context.Add(phone);
+
+                IEnumerable<PhoneParameterValue> phoneParameterValues = model.ParameterValueIds
+                    .Select(id => new PhoneParameterValue
+                    {
+                        Id = Guid.NewGuid(),
+                        ParameterValueId = id,
+                        PhoneId = phone.Id
+                    });
+                
+                _context.PhoneParameterValues.AddRange(phoneParameterValues);
 
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(phone);
+            return View(model);
         }
 
         // GET: Phones/Edit/5
@@ -89,12 +99,32 @@ namespace Lab1.Controllers
                 return NotFound();
             }
 
-            var phone = await _context.Phones.FindAsync(id);
+            var phone = await _context.Phones
+                .Include(p => p.PhoneParameterValues)
+                .ThenInclude(v => v.ParameterValue)
+                .ThenInclude(v => v.Parameter)
+                .SingleAsync(p => p.Id == id);
             if (phone == null)
             {
                 return NotFound();
             }
-            return View(phone);
+
+            Dictionary<Guid, Guid> phoneParameterValues =
+                phone.PhoneParameterValues.ToDictionary(v => v.ParameterValue.ParameterId, v => v.ParameterValueId);
+
+            ViewBag.Parameters = _context.Parameters.ToList();
+            ViewBag.ParameterValues = _context.ParameterValues
+                .ToList()
+                .GroupBy(pv => pv.ParameterId)
+                .ToDictionary(g => g.Key,
+                    g => new SelectList(g, nameof(ParameterValue.Id), nameof(ParameterValue.ValueText),
+                        phoneParameterValues.TryGetValue(g.Key, out var value) ? (object)value : null));
+            return View(new EditPhoneModel
+            {
+                Id = phone.Id,
+                Name = phone.Name,
+                ParameterValueIds = phone.PhoneParameterValues.Select(v => v.ParameterValueId).ToList()
+            });
         }
 
         // POST: Phones/Edit/5
@@ -102,18 +132,32 @@ namespace Lab1.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name")] Phone phone)
+        public async Task<IActionResult> Edit(Guid id, EditPhoneModel model)
         {
-            if (id != phone.Id)
+            if (id != model.Id)
             {
                 return NotFound();
             }
+
+            var phone = await _context.Phones.FindAsync(id);
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    phone.Name = model.Name;
                     _context.Update(phone);
+                    var oldValues = await _context.PhoneParameterValues.Where(pv => pv.PhoneId == id).ToListAsync();
+                    _context.PhoneParameterValues.RemoveRange(oldValues);
+                    IEnumerable<PhoneParameterValue> newValues = model.ParameterValueIds
+                        .Select(valueId => new PhoneParameterValue
+                        {
+                            Id = Guid.NewGuid(),
+                            ParameterValueId = valueId,
+                            PhoneId = phone.Id
+                        });
+
+                    _context.PhoneParameterValues.AddRange(newValues);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -129,7 +173,23 @@ namespace Lab1.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(phone);
+
+            Dictionary<Guid, Guid> phoneParameterValues =
+                phone.PhoneParameterValues.ToDictionary(v => v.ParameterValue.ParameterId, v => v.ParameterValueId);
+
+            ViewBag.Parameters = _context.Parameters.ToList();
+            ViewBag.ParameterValues = _context.ParameterValues
+                .ToList()
+                .GroupBy(pv => pv.ParameterId)
+                .ToDictionary(g => g.Key,
+                    g => new SelectList(g, nameof(ParameterValue.Id), nameof(ParameterValue.ValueText),
+                        phoneParameterValues.TryGetValue(g.Key, out var value) ? (object)value : null));
+            return View(new EditPhoneModel
+            {
+                Id = phone.Id,
+                Name = phone.Name,
+                ParameterValueIds = phone.PhoneParameterValues.Select(v => v.ParameterValueId).ToList()
+            });
         }
 
         // GET: Phones/Delete/5

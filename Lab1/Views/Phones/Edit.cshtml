@@ -1,4 +1,4 @@
-﻿@model Lab1.DataAccess.Models.Phone
+﻿@model EditPhoneModel
 
 @{
     ViewData["Title"] = "Edit Phone";
@@ -17,6 +17,16 @@
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
+            @for (int i = 0; i < ViewBag.Parameters.Count; i++)
+            {
+                var parameter = ViewBag.Parameters[i];
+
+                <div class="form-group">
+                    <label class="control-label">@parameter.Name</label>
+                    <input type="hidden" />
+                    <select asp-for="@Model.ParameterValueIds[i]" class="form-control" asp-items="@ViewBag.ParameterValues[parameter.Id]"></select>
+                </div>
+            }
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-default" />
             </div>

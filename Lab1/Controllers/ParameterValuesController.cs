@@ -129,6 +129,8 @@ namespace Lab1.Controllers
         {
             var parameterValue = await _context.ParameterValues.FindAsync(id);
             _context.ParameterValues.Remove(parameterValue);
+            var phoneValues = await _context.PhoneParameterValues.Where(pv => pv.ParameterValueId == id).ToListAsync();
+            _context.PhoneParameterValues.RemoveRange(phoneValues);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }

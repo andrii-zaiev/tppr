@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Lab1.Models
 {
-    public class PhoneModel
+    public class CreatePhoneModel
     {
-        public Phone Phone { get; set; }
+        public string Name { get; set; }
 
-        public List<PhoneParameterValue> PhoneParameterValues { get; set; }
+        public List<Guid> ParameterValueIds { get; set; }
     }
 }
