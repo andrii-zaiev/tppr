@@ -1,0 +1,55 @@
+﻿@model IEnumerable<Lab1.DataAccess.Models.ParameterValue>
+
+@{
+    ViewData["Title"] = "Parameter Values";
+    var parameters = Model.GroupBy(p => p.ParameterId)
+        .Select(pg => new
+        {
+            Name = pg.First().Parameter.Name,
+            Values = pg.ToList()
+        })
+        .OrderBy(p => p.Name)
+        .ToList();
+}
+
+<h2>Parameter Values</h2>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+
+@foreach (var parameter in parameters)
+{
+    <hr/>
+    <h4>@parameter.Name</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Value)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.ValueText)
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in parameter.Values) {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Value)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ValueText)
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+

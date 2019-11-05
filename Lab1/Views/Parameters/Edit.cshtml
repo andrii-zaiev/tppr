@@ -1,0 +1,64 @@
+﻿@using Lab1.DataAccess.Models
+@model Lab1.DataAccess.Models.Parameter
+
+@{
+    ViewData["Title"] = "Edit Parameter";
+}
+
+<h4>Parameter</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Type" class="control-label"></label>
+                <select asp-for="Type" class="form-control">
+                    <option value="@CriterionType.Categorical">Categorical</option>
+                    <option value="@CriterionType.Quantitive">Quantitive</option>
+                </select>
+                <span asp-validation-for="Type" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Optimality" class="control-label"></label>
+                <select asp-for="Optimality" class="form-control">
+                    <option value="@Optimality.Min">Min</option>
+                    <option value="@Optimality.Max">Max</option>
+                </select>
+                <span asp-validation-for="Optimality" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Unit" class="control-label"></label>
+                <input asp-for="Unit" class="form-control" />
+                <span asp-validation-for="Unit" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Scale" class="control-label"></label>
+                <select asp-for="Scale" class="form-control">
+                    <option value="@Scale.Nominal">Nominal</option>
+                    <option value="@Scale.Ordinal">Ordinal</option>
+                    <option value="@Scale.Interval">Interval</option>
+                    <option value="@Scale.Ratio">Ratio</option>
+                </select>
+                <span asp-validation-for="Scale" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

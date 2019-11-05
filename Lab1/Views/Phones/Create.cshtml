@@ -1,0 +1,42 @@
+﻿@model PhoneModel
+
+@{
+    ViewData["Title"] = "Create Phone";
+}
+
+<h2>Create Phone</h2>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Phone.Name" class="control-label"></label>
+                <input asp-for="Phone.Name" class="form-control" />
+                <span asp-validation-for="Phone.Name" class="text-danger"></span>
+            </div>
+            @for(int i = 0; i < ViewBag.Parameters.Count; i++)
+            {
+                var parameter = ViewBag.Parameters[i];
+
+                <div class="form-group">
+                    <label class="control-label">@parameter.Name</label>
+                    <input type="hidden"/>
+                    <select asp-for="@Model.PhoneParameterValues[i].ParameterValueId" class="form-control" asp-items="@ViewBag.ParameterValues[parameter.Id]"></select>
+                </div>
+            }
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
