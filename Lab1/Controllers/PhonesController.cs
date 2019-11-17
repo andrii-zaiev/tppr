@@ -50,12 +50,12 @@ namespace Lab1.Controllers
         // GET: Phones/Create
         public IActionResult Create()
         {
-            ViewBag.Parameters = _context.Parameters.ToList();
+            ViewBag.Parameters = _context.Parameters.OrderBy(p => p.Name).ToList();
             ViewBag.ParameterValues = _context.ParameterValues
                 .ToList()
                 .GroupBy(pv => pv.ParameterId)
                 .ToDictionary(g => g.Key,
-                    g => new SelectList(g, nameof(ParameterValue.Id), nameof(ParameterValue.ValueText)));
+                    g => new SelectList(g.OrderBy(v => v.Value), nameof(ParameterValue.Id), nameof(ParameterValue.ValueText)));
             return View(new CreatePhoneModel());
         }
 
@@ -88,6 +88,12 @@ namespace Lab1.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            ViewBag.Parameters = _context.Parameters.OrderBy(p => p.Name).ToList();
+            ViewBag.ParameterValues = _context.ParameterValues
+                .ToList()
+                .GroupBy(pv => pv.ParameterId)
+                .ToDictionary(g => g.Key,
+                    g => new SelectList(g.OrderBy(v => v.Value), nameof(ParameterValue.Id), nameof(ParameterValue.ValueText)));
             return View(model);
         }
 
@@ -112,12 +118,12 @@ namespace Lab1.Controllers
             Dictionary<Guid, Guid> phoneParameterValues =
                 phone.PhoneParameterValues.ToDictionary(v => v.ParameterValue.ParameterId, v => v.ParameterValueId);
 
-            ViewBag.Parameters = _context.Parameters.ToList();
+            ViewBag.Parameters = _context.Parameters.OrderBy(p => p.Name).ToList();
             ViewBag.ParameterValues = _context.ParameterValues
                 .ToList()
                 .GroupBy(pv => pv.ParameterId)
                 .ToDictionary(g => g.Key,
-                    g => new SelectList(g, nameof(ParameterValue.Id), nameof(ParameterValue.ValueText),
+                    g => new SelectList(g.OrderBy(v => v.Value), nameof(ParameterValue.Id), nameof(ParameterValue.ValueText),
                         phoneParameterValues.TryGetValue(g.Key, out var value) ? (object)value : null));
             return View(new EditPhoneModel
             {
@@ -177,12 +183,12 @@ namespace Lab1.Controllers
             Dictionary<Guid, Guid> phoneParameterValues =
                 phone.PhoneParameterValues.ToDictionary(v => v.ParameterValue.ParameterId, v => v.ParameterValueId);
 
-            ViewBag.Parameters = _context.Parameters.ToList();
+            ViewBag.Parameters = _context.Parameters.OrderBy(p => p.Name).ToList();
             ViewBag.ParameterValues = _context.ParameterValues
                 .ToList()
                 .GroupBy(pv => pv.ParameterId)
                 .ToDictionary(g => g.Key,
-                    g => new SelectList(g, nameof(ParameterValue.Id), nameof(ParameterValue.ValueText),
+                    g => new SelectList(g.OrderBy(v => v.Value), nameof(ParameterValue.Id), nameof(ParameterValue.ValueText),
                         phoneParameterValues.TryGetValue(g.Key, out var value) ? (object)value : null));
             return View(new EditPhoneModel
             {

@@ -6,7 +6,7 @@
         .Select(pg => new
         {
             Name = pg.First().Parameter.Name,
-            Values = pg.ToList()
+            Values = pg.OrderBy(v => v.Value).ToList()
         })
         .OrderBy(p => p.Name)
         .ToList();

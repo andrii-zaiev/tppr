@@ -69,7 +69,7 @@ namespace Lab1.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("ParameterId,Name,Type,Optimality,Unit,Scale")] Parameter parameter)
+        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,Type,Optimality,Unit,Scale")] Parameter parameter)
         {
             if (id != parameter.Id)
             {

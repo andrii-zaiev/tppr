@@ -4,8 +4,8 @@
     ViewData["Title"] = "Details";
 }
 
+<h2>Phone</h2>
 <div>
-    <h4>Phone</h4>
     <hr />
     <dl class="dl-horizontal">
         <dt>
@@ -22,7 +22,7 @@
                 @parameter.ParameterValue.Parameter.Name
             </dt>
             <dd>
-                @parameter.ParameterValue.ValueText
+                @parameter.ParameterValue.ValueText @parameter.ParameterValue.Parameter.Unit
             </dd>
         </dl>
     }
