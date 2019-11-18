@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Lab1.DataAccess;
 using Lab1.DataAccess.Models;
+using Lab1.Services;
 
 namespace Lab1.Controllers
 {
@@ -29,7 +29,6 @@ namespace Lab1.Controllers
         // GET: PhoneSelections/Create
         public IActionResult Create()
         {
-            ViewData["PhoneId"] = new SelectList(_context.Phones, nameof(Phone.Id), nameof(Phone.Name));
             ViewData["UserId"] = new SelectList(_context.Users, nameof(DataAccess.Models.User.Id), nameof(DataAccess.Models.User.Name));
             return View();
         }
@@ -39,73 +38,24 @@ namespace Lab1.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,UserId,PhoneId")] PhoneSelection phoneSelection)
+        public async Task<IActionResult> Create([Bind("UserId")] Guid userId)
         {
             if (ModelState.IsValid)
             {
-                phoneSelection.Id = Guid.NewGuid();
-                _context.Add(phoneSelection);
+
+
+                var phoneSelection = new PhoneSelection
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    PhoneId = FindBestPhone()
+                };
+                _context.PhoneSelections.Add(phoneSelection);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["PhoneId"] = new SelectList(_context.Phones, nameof(Phone.Id), nameof(Phone.Name), phoneSelection.PhoneId);
-            ViewData["UserId"] = new SelectList(_context.Users, nameof(DataAccess.Models.User.Id), nameof(DataAccess.Models.User.Name), phoneSelection.UserId);
-            return View(phoneSelection);
-        }
-
-        // GET: PhoneSelections/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var phoneSelection = await _context.PhoneSelections.FindAsync(id);
-            if (phoneSelection == null)
-            {
-                return NotFound();
-            }
-            ViewData["PhoneId"] = new SelectList(_context.Phones, nameof(Phone.Id), nameof(Phone.Name), phoneSelection.PhoneId);
-            ViewData["UserId"] = new SelectList(_context.Users, nameof(DataAccess.Models.User.Id), nameof(DataAccess.Models.User.Name), phoneSelection.UserId);
-            return View(phoneSelection);
-        }
-
-        // POST: PhoneSelections/Edit/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
-        // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,UserId,PhoneId")] PhoneSelection phoneSelection)
-        {
-            if (id != phoneSelection.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(phoneSelection);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PhoneSelectionExists(phoneSelection.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["PhoneId"] = new SelectList(_context.Phones, nameof(Phone.Id), nameof(Phone.Name), phoneSelection.PhoneId);
-            ViewData["UserId"] = new SelectList(_context.Users, nameof(DataAccess.Models.User.Id), nameof(DataAccess.Models.User.Name), phoneSelection.UserId);
-            return View(phoneSelection);
+            ViewData["UserId"] = new SelectList(_context.Users.OrderBy(u => u.Name), nameof(DataAccess.Models.User.Id), nameof(DataAccess.Models.User.Name), userId);
+            return View(new PhoneSelection { UserId = userId });
         }
 
         // GET: PhoneSelections/Delete/5
@@ -142,6 +92,37 @@ namespace Lab1.Controllers
         private bool PhoneSelectionExists(Guid id)
         {
             return _context.PhoneSelections.Any(e => e.Id == id);
+        }
+
+        private Guid FindBestPhone()
+        {
+            var phones = _context.Phones
+                .Include(p => p.PhoneParameterValues)
+                .ThenInclude(pv => pv.ParameterValue)
+                .ThenInclude(pvv => pvv.Parameter)
+                .ToList()
+                .Select(p => new Alternative
+                {
+                    Id = p.Id,
+                    Criteria = p.PhoneParameterValues.ToDictionary(pv => pv.ParameterValue.ParameterId, pv =>
+                        new Criterion
+                        {
+                            Id = pv.ParameterValue.ParameterId,
+                            Optimality = pv.ParameterValue.Parameter.Optimality,
+                            Value = pv.ParameterValue.Value
+                        })
+                })
+                .ToList();
+
+            var decisionService = new DecisionService();
+
+            var normalized = decisionService.Normalize(phones);
+
+            var paretoOptimal = decisionService.GetParetoOptimal(normalized);
+
+            var optimal = decisionService.GetOptimalByLinearAdditiveConvolution(paretoOptimal);
+
+            return optimal.Id;
         }
     }
 }
