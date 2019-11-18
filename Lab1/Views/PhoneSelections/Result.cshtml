@@ -1,0 +1,26 @@
+﻿@using Lab1.DataAccess.Models
+@model Lab1.Models.SelectionResultModel
+
+@{
+    ViewData["Title"] = "Result";
+}
+
+<h2>Result</h2>
+
+<div>
+    <h4>Pareto-optimal</h4>
+    <hr />
+    <ul>
+        @foreach (Phone phone in Model.ParetoOptimalPhones.OrderBy(p => p.Name))
+        {
+            <li>@phone.Name</li>
+        }
+    </ul>
+    <hr />
+    <h4>Best phone</h4>
+    <hr />
+    <p>@Model.SelectedPhone.Name</p>
+</div>
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

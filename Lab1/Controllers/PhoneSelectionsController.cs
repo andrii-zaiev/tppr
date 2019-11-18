@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Lab1.DataAccess;
 using Lab1.DataAccess.Models;
+using Lab1.Models;
 using Lab1.Services;
 
 namespace Lab1.Controllers
@@ -42,17 +44,22 @@ namespace Lab1.Controllers
         {
             if (ModelState.IsValid)
             {
-
+                var result = FindBestPhone();
 
                 var phoneSelection = new PhoneSelection
                 {
                     Id = Guid.NewGuid(),
                     UserId = userId,
-                    PhoneId = FindBestPhone()
+                    PhoneId = result.bestPhoneId
                 };
                 _context.PhoneSelections.Add(phoneSelection);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return View("Result", new SelectionResultModel
+                {
+                    SelectedPhone = _context.Phones.Find(result.bestPhoneId),
+                    ParetoOptimalPhones =
+                        _context.Phones.Where(p => result.paretoOptimalPhoneIds.Contains(p.Id)).ToList()
+                });
             }
             ViewData["UserId"] = new SelectList(_context.Users.OrderBy(u => u.Name), nameof(DataAccess.Models.User.Id), nameof(DataAccess.Models.User.Name), userId);
             return View(new PhoneSelection { UserId = userId });
@@ -94,7 +101,7 @@ namespace Lab1.Controllers
             return _context.PhoneSelections.Any(e => e.Id == id);
         }
 
-        private Guid FindBestPhone()
+        private (Guid bestPhoneId, List<Guid> paretoOptimalPhoneIds) FindBestPhone()
         {
             var phones = _context.Phones
                 .Include(p => p.PhoneParameterValues)
@@ -122,7 +129,7 @@ namespace Lab1.Controllers
 
             var optimal = decisionService.GetOptimalByLinearAdditiveConvolution(paretoOptimal);
 
-            return optimal.Id;
+            return (optimal.Id, paretoOptimal.Select(a => a.Id).ToList());
         }
     }
 }
