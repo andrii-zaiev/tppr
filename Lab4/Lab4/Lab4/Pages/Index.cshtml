@@ -1,0 +1,77 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<h2>@Model.Game.Name</h2>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th></th>
+        @foreach (string column in Model.Game.Columns)
+        {
+            <th>@column</th>
+        }
+    </tr>
+    </thead>
+    <tbody>
+    @for (int i = 0; i < Model.Game.Rows.Count; i++)
+    {
+        <tr>
+            <td>@Model.Game.Rows[i]</td>
+                
+            @foreach (var row in Model.Game.Matrix[i])
+            {
+                <td>
+                    @if (!Model.Game.IsBimatrix)
+                    {
+                        @(row.First())
+                    }
+                    else
+                    {
+                        @(String.Join(",", row))
+                    }
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table>
+
+@if (Model.Changed)
+{
+<dl>
+    <dt>Your strategy</dt>
+    <dd>@Model.Game.Rows[Model.Strategy]</dd>
+
+    <dt>Opponent's strategy</dt>
+    <dd>@Model.Game.Columns[Model.OpponentStrategy]</dd>
+
+    <dt>Your payoff</dt>
+    <dd>@Model.State[0]</dd>
+
+    <dt>Opponent's payoff</dt>
+    <dd>@Model.State[1]</dd>
+</dl>
+}
+
+<form method="post">
+    <div>
+        @for (int i = 0; i < Model.Game.Rows.Count; i++)
+        {
+            <div class="radio">
+                <label>
+                    <input type="radio" name="strategy" id="strategyRadios + @i" value="@i" @(i == Model.Strategy ? "checked" : "")>
+                    @Model.Game.Rows[i]
+                    @if (Model.OptimalStrategyIndices.Contains(i))
+                    {
+                        <span class="text-success"> – optimal</span>
+                    }
+                </label>
+            </div>
+        }
+    </div>
+    <button type="submit" class="btn btn-primary">Select</button>
+</form>
